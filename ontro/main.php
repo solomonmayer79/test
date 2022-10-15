@@ -106,11 +106,14 @@ if ( $SERCHK == 'SEARCH' ) {
   $search_text = rtrim ( $ltrimtext );
   $foldequery = "select * from folder where folder_name='$search_text'";
   $folder_result = mysqli_query ( $con, $foldequery );
+  if ( $folder_result->num_rows == 0 ) {
+    throw new Exception( " This name not in the database " ) ;
+    exit;
+  }
   $foldervalue = mysqli_fetch_object ( $folder_result );
   if ( !empty ( $foldervalue ) && !empty ( $folder_result ) ) {
     $folderId = $foldervalue->parent_folder_id;
     $foldername = $foldervalue->folder_name;
-    #print_r($foldername);
     $out_url[] = array_push($out_url, $foldername);
   }
   if ( !empty ( $folderId ) ) {
@@ -124,11 +127,7 @@ if ( $SERCHK == 'SEARCH' ) {
   }
   #$url = [ '"'.$fildir.'",' .'"'.$foldername .'",'.'"'. $filename.'"' ];
   #print_r($out_url);exit;
-  if (!empty( $out_url ) ){
-    $output = implode ( "/", $out_url ) ;
-  }else{
-    echo 'Word not in this directory: ' .$e->getMessage();
-  }
+  $output = implode ( "/", $out_url ) ;
   #$output = implode ( "/", array ( $fildir, $foldername, $filename ) ) ;
   print($output);
 }
