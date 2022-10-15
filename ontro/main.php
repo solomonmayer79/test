@@ -42,7 +42,7 @@ class SearchDirectory
 /*Create the class object*/
 $Obj = new SearchDirectory() ;
 $woring_dir = $Obj->searchdir( 'c:/Documents' ) ;
-//CREATE DATABASE TABLES
+/*CREATE DATABASE TABLES*/
 $sql = "SELECT 1 FROM `ontro`.`folder` LIMIT 1;";
 $result = mysqli_query ( $con, $sql );
     if( $result == false ){
@@ -66,6 +66,7 @@ foreach ( $woring_dir as $key => $val ) {
     for ( $i = 0; $i <= $count; $i++ ){
       if ( !empty( $explode_url[$i] ) ) {
         $folder_id = $fid++;
+        /*INSERT FOLDER TABLE QUERY*/
         $insert_folder_sql = "INSERT INTO folder VALUES('$folder_id',";
         $parent_folder_id = $explode_url[$i];
         $chk   = ':';
@@ -80,6 +81,7 @@ foreach ( $woring_dir as $key => $val ) {
         }else{
           $insert_folder_sql .= "'$i');";
         }
+        /*INSERT FILE NAME TABLE QUERY*/
         $chkone   = '.';
         $posone = strpos ( $parent_folder_id, $chkone );
         if ( !empty ( $posone ) ) {
@@ -87,35 +89,47 @@ foreach ( $woring_dir as $key => $val ) {
           $filename = $explode_url[$i];
           $insert_filename_sql = "INSERT INTO filename VALUES ('$filename_id', '$folder_id','$filename' );";
         }
-      }
+      }#mysqli_query ( $con, $insert_filename_sql );
     }
-}
+}#mysqli_query ( $con, $insert_folder_sql );
+/*SEARCH KEY RESULT*/
 $SEARCH_NAME = filter_input ( INPUT_POST, 'searchname' );
 $SERCHK = filter_input ( INPUT_POST, 'search' );
+$out_url = array();
 if ( $SERCHK == 'SEARCH' ) {
   $query = "select * from folder where folder_id=1";
   $result = mysqli_query ( $con, $query );
   $value = mysqli_fetch_object ( $result );
   $fildir = $value->folder_name;
+  $out_url[] = array_push($out_url, $fildir);
   $ltrimtext = ltrim ( $SEARCH_NAME );
   $search_text = rtrim ( $ltrimtext );
   $foldequery = "select * from folder where folder_name='$search_text'";
   $folder_result = mysqli_query ( $con, $foldequery );
   $foldervalue = mysqli_fetch_object ( $folder_result );
-  if ( !empty ( $foldervalue ) ) {
+  if ( !empty ( $foldervalue ) && !empty ( $folder_result ) ) {
     $folderId = $foldervalue->parent_folder_id;
     $foldername = $foldervalue->folder_name;
+    #print_r($foldername);
+    $out_url[] = array_push($out_url, $foldername);
   }
   if ( !empty ( $folderId ) ) {
-     $filequery = "select * from filname where folder_id='$folderId'";
+     $filequery = "select * from filename where folder_id='$folderId'";
      $file_result = mysqli_query ( $con, $filequery );
-     if ( !empty ( $file_result ) ) {
+     if ( !empty ( $file_result && !empty ( $filequery ) ) ) {
       $file_value = mysqli_fetch_object($file_result);
       $filename = $file_value->file_name;
+      $out_url[] = array_push($out_url, $filename);
      }
   }
-  $url = [ '"'.$fildir.'",' .'"'.$foldername .'",'.'"'. $filename.'"' ];
-  $output = implode ( "/", $url ) ;
+  #$url = [ '"'.$fildir.'",' .'"'.$foldername .'",'.'"'. $filename.'"' ];
+  #print_r($out_url);exit;
+  if (!empty( $out_url ) ){
+    $output = implode ( "/", $out_url ) ;
+  }else{
+    echo 'Word not in this directory: ' .$e->getMessage();
+  }
+  #$output = implode ( "/", array ( $fildir, $foldername, $filename ) ) ;
   print($output);
 }
 $con->close();
